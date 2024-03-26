@@ -106,6 +106,7 @@ class FingerCtrl:
 class LimbsCtrl:
     def __init__(self, armature, side):
         self.armature = ArmatureSupport(armature)
+        self.side = side
         self.root_bonename = 'Root'
         self.hand_bonename = f"Hand_{side}"
         self.lowerarm_bonename = f"LowerArm_{side}"
@@ -116,36 +117,38 @@ class LimbsCtrl:
         self.legpole_bonename = f"LegPole_{side}"
     
     def new_bones(self):
+        direction = 1.0 if self.side == 'L' else -1.0
+        
         root = self.armature.get_edit_bone(self.root_bonename)
         lowerarm = self.armature.get_edit_bone(self.lowerarm_bonename)
         lowerleg = self.armature.get_edit_bone(self.lowerleg_bonename)
 
         bone = self.armature.get_edit_bone(self.armik_bonename, True)
         bone.head = lowerarm.tail
-        bone.tail = bone.head + Vector((0.12, 0, 0))
+        bone.tail = bone.head + Vector((0.12*direction, 0, 0))
         bone.parent = root
 
         bone = self.armature.get_edit_bone(self.armpole_bonename, True)
         bone.head = lowerarm.head + Vector((0, 0.24, 0))
-        bone.tail = bone.head + Vector((0, 0.12, 0))
+        bone.tail = bone.head + Vector((0, 0.12*direction, 0))
         bone.parent = root
 
         bone = self.armature.get_edit_bone(self.legik_bonename, True)
         bone.head = lowerleg.tail
-        bone.tail = bone.head + Vector((0.12, 0, 0))
+        bone.tail = bone.head + Vector((0.12*direction, 0, 0))
         bone.parent = root
 
         bone = self.armature.get_edit_bone(self.legpole_bonename, True)
         bone.head = lowerleg.head - Vector((0, 0.24, 0))
-        bone.tail = bone.head - Vector((0, 0.12, 0))
+        bone.tail = bone.head - Vector((0, 0.12*direction, 0))
         bone.parent = root
     
     def hand_transforms_follow(self):
         c = self.armature.get_bone_constraint(self.hand_bonename, 'COPY_TRANSFORMS', 'VRMRIG_TransformsFollow')
         c.target = self.armature.armature
         c.subtarget = self.armik_bonename
-        c.target_space = 'LOCAL'
-        c.owner_space = 'LOCAL'
+        c.target_space = 'WORLD'
+        c.owner_space = 'WORLD'
 
     def ik(self, bonename, ik_bonename, pole_bonename, pole_angle, constraint_name):
         c = self.armature.get_bone_constraint(bonename, 'IK', constraint_name)
@@ -159,7 +162,7 @@ class LimbsCtrl:
     def generate(self):
         self.armature.edit_mode(self.new_bones)
         self.hand_transforms_follow()
-        self.ik(self.lowerarm_bonename, self.armik_bonename, self.armpole_bonename, 180, 'VRMRIG_ArmIK')
+        self.ik(self.lowerarm_bonename, self.armik_bonename, self.armpole_bonename, 180 if self.side == 'L' else 0, 'VRMRIG_ArmIK')
         self.ik(self.lowerleg_bonename, self.legik_bonename, self.legpole_bonename, -90, 'VRMRIG_LegIK')
 
 class Hair:
@@ -189,13 +192,18 @@ class VRMRIG_AddControllerOperator(bpy.types.Operator):
 
     def execute(self, context):
         armature = context.active_object
-        for side in ['L', 'R']:
-            LimbsCtrl(armature, side).generate()
-            FingerCtrl(armature, side, 'Thumb', '-Z').generate()
-            FingerCtrl(armature, side, 'Index', 'X').generate()
-            FingerCtrl(armature, side, 'Middle', 'X').generate()
-            FingerCtrl(armature, side, 'Ring', 'X').generate()
-            FingerCtrl(armature, side, 'Little', 'X').generate()
+        LimbsCtrl(armature, 'L').generate()
+        LimbsCtrl(armature, 'R').generate()
+        FingerCtrl(armature, 'L', 'Thumb', 'Z').generate()
+        FingerCtrl(armature, 'R', 'Thumb', '-Z').generate()
+        FingerCtrl(armature, 'L', 'Index', 'X').generate()
+        FingerCtrl(armature, 'R', 'Index', '-X').generate()
+        FingerCtrl(armature, 'L', 'Middle', 'X').generate()
+        FingerCtrl(armature, 'R', 'Middle', '-X').generate()
+        FingerCtrl(armature, 'L', 'Ring', 'X').generate()
+        FingerCtrl(armature, 'R', 'Ring', '-X').generate()
+        FingerCtrl(armature, 'L', 'Little', 'X').generate()
+        FingerCtrl(armature, 'R', 'Little', '-X').generate()
         return {'FINISHED'}
 
 class VRMRIG_EnableHairSpringBoneOperator(bpy.types.Operator):
