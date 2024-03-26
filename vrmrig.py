@@ -162,9 +162,24 @@ class LimbsCtrl:
         self.ik(self.lowerarm_bonename, self.armik_bonename, self.armpole_bonename, 180, 'VRMRIG_ArmIK')
         self.ik(self.lowerleg_bonename, self.legik_bonename, self.legpole_bonename, -90, 'VRMRIG_LegIK')
 
+class Hair:
+    bone_pattern = re.compile("^(Hair|Bust)\\d+_(L|R|\d+)$")
+    
+    def __init__(self, armature):
+        self.armature = ArmatureSupport(armature)
+    
+    def enable_spring_bone(self):
+        for bonename, bone in self.armature.armature.pose.bones.items():
+            if Hair.bone_pattern.match(bonename) is None:
+                continue
+            bone.sb_bone_spring = True
+            bone.sb_bone_rot = True
+            bone.sb_stiffness = 0.3
+            bone.sb_gravity = 0
+            bone.sb_damp = 0.5
 
-class VRMRIG_AddCtrlOperator(bpy.types.Operator):
-    bl_idname = "vrmrig.addctrl"
+class VRMRIG_AddControllerOperator(bpy.types.Operator):
+    bl_idname = "vrmrig.add_controller"
     bl_label = "Add Controller"
     bl_description = "VRMRIG: Add Controller Operator"
 
@@ -176,11 +191,25 @@ class VRMRIG_AddCtrlOperator(bpy.types.Operator):
         armature = context.active_object
         for side in ['L', 'R']:
             LimbsCtrl(armature, side).generate()
-            FingerCtrl(armature, side, 'Thumb', 'Z').generate()
+            FingerCtrl(armature, side, 'Thumb', '-Z').generate()
             FingerCtrl(armature, side, 'Index', 'X').generate()
             FingerCtrl(armature, side, 'Middle', 'X').generate()
             FingerCtrl(armature, side, 'Ring', 'X').generate()
             FingerCtrl(armature, side, 'Little', 'X').generate()
+        return {'FINISHED'}
+
+class VRMRIG_EnableHairSpringBoneOperator(bpy.types.Operator):
+    bl_idname = "vrmrig.enable_hair_spring_bone"
+    bl_label = "Enable hair spring bone"
+    bl_description = "VRMRIG: Enable hair spring bone"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.type == 'ARMATURE'
+
+    def execute(self, context):
+        armature = context.active_object
+        Hair(armature).enable_spring_bone()
         return {'FINISHED'}
 
 class VRMRIG_Panel(bpy.types.Panel):
@@ -193,17 +222,20 @@ class VRMRIG_Panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-        row.operator("vrmrig.addctrl")
+        row.operator("vrmrig.add_controller")
+        row.operator("vrmrig.enable_hair_spring_bone")
 
 
 def register():
-    bpy.utils.register_class(VRMRIG_AddCtrlOperator)
+    bpy.utils.register_class(VRMRIG_AddControllerOperator)
+    bpy.utils.register_class(VRMRIG_EnableHairSpringBoneOperator)
     bpy.utils.register_class(VRMRIG_Panel)
 
 
 def unregister():
     bpy.utils.unregister_class(VRMRIG_Panel)
-    bpy.utils.unregister_class(VRMRIG_AddCtrlOperator)
+    bpy.utils.unregister_class(VRMRIG_EnableHairSpringBoneOperator)
+    bpy.utils.unregister_class(VRMRIG_AddControllerOperator)
 
 
 if __name__ == "__main__":
