@@ -5,23 +5,15 @@ from bpy.types import Armature, Context, Operator, PoseBone, Panel
 from mathutils import Matrix, Vector
 
 class ArmatureSupport:
-    bone_pattern1 = re.compile("^(Thumb|Index|Middle|Ring|Little)(1|2|3)_(L|R)$")
-
     def __init__(self, armature):
         self.armature = armature
-        self.bonename_mapping = {}
-        for bonename, bone in self.armature.data.bones.items():
-            m = ArmatureSupport.bone_pattern1.match(bonename)
-            if m != None:
-                self.bonename_mapping[f"{m.group(1)}{m.group}"]
-            
     
     def edit_mode(self, func):
         prevmode = self.armature.mode
         if prevmode != 'EDIT':
             bpy.ops.object.mode_set(mode = 'EDIT')
         try:
-            func(self.armature.data.edit_bones)
+            func()
         finally:
             if prevmode != self.armature.mode:
                 bpy.ops.object.mode_set(mode = prevmode)
@@ -46,9 +38,6 @@ class ArmatureSupport:
             c = b.constraints.new(type)
             c.name = name
         return c
-    
-    def find_bone(self, names, side):
-
 
 class FingerCtrl:
     bone_pattern = re.compile("^(Thumb|Index|Middle|Ring|Little)(1|2|3)_(L|R)$")
@@ -70,7 +59,7 @@ class FingerCtrl:
 
     def rotation_follow(self, follower, followed):
         c = self.armature.get_bone_constraint(follower, 'COPY_ROTATION', 'VRMRIG_RotationFollow')
-        c.target = self.armature
+        c.target = self.armature.armature
         c.subtarget = followed
         c.target_space = 'LOCAL'
         c.owner_space = 'LOCAL'
@@ -95,7 +84,7 @@ class FingerCtrl:
         var.name = "var"
         var.type = 'TRANSFORMS'
         t = var.targets[0]
-        t.id = self.armature
+        t.id = self.armature.armature
         t.bone_target = self.ctrl_bonename
         t.transform_type = 'SCALE_Y'
         t.transform_space = 'LOCAL_SPACE'
@@ -111,7 +100,7 @@ class FingerCtrl:
         self.rotation_follow(self.bonename1, self.ctrl_bonename)
         self.rotation_driver(self.bonename2, self.bending_axis)
         self.limit_ctrl_scale()
-        self.set_bone_layer([self.bonename1, self.bonename2, self.bonename3])
+        self.set_bone_layer([self.bonename1, self.bonename2, self.bonename3], 1)
 
 
 class LimbsCtrl:
@@ -147,22 +136,22 @@ class LimbsCtrl:
         bone.parent = root
 
         bone = self.armature.get_edit_bone(self.legpole_bonename, True)
-        bone.head = lowerarm.head - Vector((0, 0.24, 0))
+        bone.head = lowerleg.head - Vector((0, 0.24, 0))
         bone.tail = bone.head - Vector((0, 0.12, 0))
         bone.parent = root
     
     def hand_transforms_follow(self):
         c = self.armature.get_bone_constraint(self.hand_bonename, 'COPY_TRANSFORMS', 'VRMRIG_TransformsFollow')
-        c.target = self.armature
+        c.target = self.armature.armature
         c.subtarget = self.armik_bonename
         c.target_space = 'LOCAL'
         c.owner_space = 'LOCAL'
 
     def ik(self, bonename, ik_bonename, pole_bonename, pole_angle, constraint_name):
         c = self.armature.get_bone_constraint(bonename, 'IK', constraint_name)
-        c.target = self.armature
+        c.target = self.armature.armature
         c.subtarget = ik_bonename
-        c.pole_target = self.armature
+        c.pole_target = self.armature.armature
         c.pole_subtarget = pole_bonename
         c.chain_count = 2
         c.pole_angle = math.radians(pole_angle)
@@ -187,8 +176,11 @@ class VRMRIG_AddCtrlOperator(bpy.types.Operator):
         armature = context.active_object
         for side in ['L', 'R']:
             LimbsCtrl(armature, side).generate()
-            for finger in ['Thumb', 'Index', 'Middle', 'Ring', 'Little']:
-                FingerCtrl(armature, side, finger).generate()
+            FingerCtrl(armature, side, 'Thumb', 'Z').generate()
+            FingerCtrl(armature, side, 'Index', 'X').generate()
+            FingerCtrl(armature, side, 'Middle', 'X').generate()
+            FingerCtrl(armature, side, 'Ring', 'X').generate()
+            FingerCtrl(armature, side, 'Little', 'X').generate()
         return {'FINISHED'}
 
 class VRMRIG_Panel(bpy.types.Panel):
