@@ -5,7 +5,7 @@ from bpy.types import Armature, Context, Operator, PoseBone, Panel
 from mathutils import Matrix, Vector
 
 class ArmatureSupport:
-    def __init__(self, armature):
+    def __init__(self, armature:Armature):
         self.armature = armature
     
     def edit_mode(self, func):
