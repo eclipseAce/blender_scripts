@@ -269,7 +269,7 @@ def set_spring_bones(obj:Object):
     if obj is None or obj.type != 'ARMATURE':
         raise TypeError("expected a obj type of ARMATURE")
     
-    bone_pattern = re.compile("^(Hair|Bust)\\d+_(L|R|\d+)$")
+    bone_pattern = re.compile("^((Hair|Bust)\\d+|Skirt(Side|Front|Back)(_end)?_\\d+)_(L|R|\\d+)$")
 
     for name, bone in obj.pose.bones.items():
         if bone_pattern.match(name) is None:
