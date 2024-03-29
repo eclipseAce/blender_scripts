@@ -1,8 +1,8 @@
 import bpy
 import math
 import re
-from bpy.types import Object, Armature, PoseBone, Constraint
-from mathutils import Vector
+from bpy.types import Object, Armature, Bone, PoseBone, Constraint
+from mathutils import Vector, Euler
 
 def add_bone_constraint(b:PoseBone, name:str, type:str, **props) -> Constraint:
     c = next((c for c in b.constraints if c.name == name), None)
@@ -17,6 +17,29 @@ def add_bone_constraint(b:PoseBone, name:str, type:str, **props) -> Constraint:
 def set_bone_layer(armature:Armature, layer:int, *names) -> None:
     for n in names:
         armature.bones[n].layers = [i == layer for i in range(32)]
+
+def get_finger_bone_shape() -> Object:
+    verts = [ (0, 0, 0), (0, 0.9, 0), (-0.05, 0.9, 0), (-0.05, 1, 0), (0.05, 1, 0), (0.05, 0.9, 0) ]
+    edges = [ (0, 1), (2, 3), (3, 4), (4, 5), (5, 2) ]
+    
+    coll = bpy.data.collections.get("VRMAUTO")
+    if coll == None:
+        coll = bpy.data.collections.new("VRMAUTO")
+        bpy.context.scene.collection.children.link(coll)
+    coll.hide_select = True
+    coll.hide_viewport = True
+    coll.hide_render = True
+    bpy.context.view_layer.layer_collection.children["VRMAUTO"].exclude = True
+
+    name = f"VRMAUTO_FingerBoneShape"
+    obj = bpy.data.objects.get(name)
+    if obj == None:
+        mesh = bpy.data.meshes.new(name)
+        mesh.from_pydata(verts, edges, [])
+        mesh.update()
+        obj = bpy.data.objects.new(name, mesh)
+        coll.objects.link(obj)
+    return obj
 
 def symmetrize_bone_names(obj:Object):
     if obj is None or obj.type != 'ARMATURE':
@@ -61,6 +84,9 @@ def gen_finger_ctrl(obj:Object, finger:str, side:str, bending_axis:str):
     hand_name = f"Hand_{side}"
     ctrl_name = f"{finger}Ctrl_{side}"
 
+    # get or create finger bone shape object
+    bone_shape = get_finger_bone_shape()
+
     # check bones integrity
     for n in [bone1_name, bone2_name, bone3_name, hand_name]:
         if armature.bones.get(n) is None:
@@ -78,6 +104,14 @@ def gen_finger_ctrl(obj:Object, finger:str, side:str, bending_axis:str):
             ctrl.parent = bones[hand_name]
         finally:
             bpy.ops.object.mode_set(mode = prevmode)
+        
+        pbone:PoseBone = obj.pose.bones[ctrl_name]
+        pbone.custom_shape = bone_shape
+        if bending_axis in ['-Z', 'Z']:
+            pbone.custom_shape_rotation_euler = Euler((0, 1, 0))
+        else:
+            pbone.custom_shape_rotation_euler = Euler((0, 0, 0))
+
     edit_bones()
     
     # add rotation constraints
@@ -288,9 +322,9 @@ if obj != None and obj.type == 'ARMATURE':
     for side in ['L', 'R']:
         for finger in ['Index', 'Middle', 'Ring', 'Little']:
             gen_finger_ctrl(obj, finger, side, 'X')
-        gen_limbs_ik(obj, 'Arm', side)
-        gen_limbs_ik(obj, 'Leg', side)
-        fix_arm_twist(obj, side)
-    set_spring_bones(obj)
+        #gen_limbs_ik(obj, 'Arm', side)
+        #gen_limbs_ik(obj, 'Leg', side)
+        #fix_arm_twist(obj, side)
+    #set_spring_bones(obj)
        
     
