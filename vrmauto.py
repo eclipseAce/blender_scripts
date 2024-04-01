@@ -100,7 +100,7 @@ def get_root_bone_shape() -> Object:
     )
 
 def symmetrize_bone_names(obj:Object):
-    armature:Armature = get_armature(obj.data)
+    armature:Armature = get_armature(obj)
 
     left_pattern = re.compile("^J_(Adj|Bip|Opt|Sec)_L_")
     right_pattern = re.compile("^J_(Adj|Bip|Opt|Sec)_R_")
@@ -128,7 +128,7 @@ def symmetrize_bone_names(obj:Object):
         bpy.ops.object.mode_set(mode = prevmode)
 
 def gen_finger_ctrl(obj:Object, finger:str, side:str, bending_axis:str):
-    armature:Armature = get_armature(obj.data)
+    armature:Armature = get_armature(obj)
 
     bone1_name = f"{finger}1_{side}"
     bone2_name = f"{finger}2_{side}"
@@ -214,7 +214,7 @@ def gen_finger_ctrl(obj:Object, finger:str, side:str, bending_axis:str):
     set_bone_layer(armature, 1, bone1_name, bone2_name, bone3_name)
 
 def gen_limbs_ik(obj:Object, kind:str, side:str):
-    armature:Armature = get_armature(obj.data)
+    armature:Armature = get_armature(obj)
 
     root_name = "Root"
     upper_name = f"Upper{kind}_{side}"
@@ -323,7 +323,7 @@ def gen_limbs_ik(obj:Object, kind:str, side:str):
         disable_rotation(pbone)
 
 def fix_arm_twist(obj:Object, side:str):
-    armature:Armature = get_armature(obj.data)
+    armature:Armature = get_armature(obj)
 
     hand_name = f"Hand_{side}"
     arm_name = f"LowerArm_{side}"
@@ -381,7 +381,7 @@ def fix_arm_twist(obj:Object, side:str):
                 bpy.ops.object.mode_set(mode = 'WEIGHT_PAINT')
                 prevselect = { b.name: b.select for b in armature.bones }
                 try:
-                    for n, b in armature.bones:
+                    for n, b in armature.bones.items():
                         b.select = n in subarm_names
                     bpy.ops.paint.weight_from_bones(type = 'AUTOMATIC')
                 finally:
@@ -396,13 +396,13 @@ def fix_arm_twist(obj:Object, side:str):
     set_bone_layer(armature, 1, *subarm_names)
 
 def change_root_bone_shape(obj:Object):
-    armature:Armature = get_armature(obj.data)
+    armature:Armature = get_armature(obj)
     root_name = "Root"
     pbone:PoseBone = obj.pose.bones[root_name]
     pbone.custom_shape = get_root_bone_shape()
 
 def set_spring_bones(obj:Object):
-    armature:Armature = get_armature(obj.data)
+    armature:Armature = get_armature(obj)
     
     bone_pattern = re.compile("^((Hair|Bust)\\d+|Skirt(Side|Front|Back)(_end)?_\\d+)_(L|R|\\d+)$")
 
@@ -411,9 +411,9 @@ def set_spring_bones(obj:Object):
             continue
         bone.sb_bone_spring = True
         bone.sb_bone_rot = True
-        bone.sb_stiffness = 0.2
+        bone.sb_stiffness = 0.4
         bone.sb_gravity = 0
-        bone.sb_damp = 0.6
+        bone.sb_damp = 0.5
 
 obj = bpy.context.active_object
 if obj != None and obj.type == 'ARMATURE':
