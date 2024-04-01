@@ -2,8 +2,13 @@ import bpy
 import math
 import re
 from typing import List
-from bpy.types import Object, Armature, Bone, PoseBone, Constraint, Collection, LimitRotationConstraint
+from bpy.types import Object, Armature, PoseBone, Constraint, Collection, LimitRotationConstraint
 from mathutils import Vector, Euler, Quaternion
+
+def get_armature(obj:Object) -> Armature:
+    if obj is None or obj.type != 'ARMATURE':
+        raise TypeError("expected a obj type of ARMATURE")
+    return obj.data
 
 def add_constraint(b:Object|PoseBone, name:str, type:str, **props) -> Constraint:
     c = next((c for c in b.constraints if c.name == name), None)
@@ -95,10 +100,7 @@ def get_root_bone_shape() -> Object:
     )
 
 def symmetrize_bone_names(obj:Object):
-    if obj is None or obj.type != 'ARMATURE':
-        raise TypeError("expected a obj type of ARMATURE")
-    
-    armature:Armature = obj.data
+    armature:Armature = get_armature(obj.data)
 
     left_pattern = re.compile("^J_(Adj|Bip|Opt|Sec)_L_")
     right_pattern = re.compile("^J_(Adj|Bip|Opt|Sec)_R_")
@@ -126,10 +128,7 @@ def symmetrize_bone_names(obj:Object):
         bpy.ops.object.mode_set(mode = prevmode)
 
 def gen_finger_ctrl(obj:Object, finger:str, side:str, bending_axis:str):
-    if obj is None or obj.type != 'ARMATURE':
-        raise TypeError("expected a obj type of ARMATURE")
-    
-    armature:Armature = obj.data
+    armature:Armature = get_armature(obj.data)
 
     bone1_name = f"{finger}1_{side}"
     bone2_name = f"{finger}2_{side}"
@@ -215,10 +214,7 @@ def gen_finger_ctrl(obj:Object, finger:str, side:str, bending_axis:str):
     set_bone_layer(armature, 1, bone1_name, bone2_name, bone3_name)
 
 def gen_limbs_ik(obj:Object, kind:str, side:str):
-    if obj is None or obj.type != 'ARMATURE':
-        raise TypeError("expected a obj type of ARMATURE")
-    
-    armature:Armature = obj.data
+    armature:Armature = get_armature(obj.data)
 
     root_name = "Root"
     upper_name = f"Upper{kind}_{side}"
@@ -327,10 +323,8 @@ def gen_limbs_ik(obj:Object, kind:str, side:str):
         disable_rotation(pbone)
 
 def fix_arm_twist(obj:Object, side:str):
-    if obj is None or obj.type != 'ARMATURE':
-        raise TypeError("expected a obj type of ARMATURE")
-    
-    armature:Armature = obj.data
+    armature:Armature = get_armature(obj.data)
+
     hand_name = f"Hand_{side}"
     arm_name = f"LowerArm_{side}"
     subarm_names = [f"LowerArm{n+1}_{side}" for n in range(3)]
@@ -402,15 +396,13 @@ def fix_arm_twist(obj:Object, side:str):
     set_bone_layer(armature, 1, *subarm_names)
 
 def change_root_bone_shape(obj:Object):
-    if obj is None or obj.type != 'ARMATURE':
-        raise TypeError("expected a obj type of ARMATURE")
+    armature:Armature = get_armature(obj.data)
     root_name = "Root"
     pbone:PoseBone = obj.pose.bones[root_name]
     pbone.custom_shape = get_root_bone_shape()
 
 def set_spring_bones(obj:Object):
-    if obj is None or obj.type != 'ARMATURE':
-        raise TypeError("expected a obj type of ARMATURE")
+    armature:Armature = get_armature(obj.data)
     
     bone_pattern = re.compile("^((Hair|Bust)\\d+|Skirt(Side|Front|Back)(_end)?_\\d+)_(L|R|\\d+)$")
 
