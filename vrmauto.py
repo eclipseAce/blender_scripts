@@ -387,8 +387,8 @@ def fix_arm_twist(obj:Object, side:str):
                 bpy.ops.object.mode_set(mode = 'WEIGHT_PAINT')
                 prevselect = { b.name: b.select for b in armature.bones }
                 try:
-                    for n in subarm_names:
-                        armature.bones[n].select = True
+                    for n, b in armature.bones:
+                        b.select = n in subarm_names
                     bpy.ops.paint.weight_from_bones(type = 'AUTOMATIC')
                 finally:
                     for n, s in prevselect.items():
@@ -426,15 +426,18 @@ def set_spring_bones(obj:Object):
 obj = bpy.context.active_object
 if obj != None and obj.type == 'ARMATURE':
     symmetrize_bone_names(obj)
+
     change_root_bone_shape(obj)
+
     gen_finger_ctrl(obj, 'Thumb', 'L', '-Z')
     gen_finger_ctrl(obj, 'Thumb', 'R', 'Z')
     for side in ['L', 'R']:
         for finger in ['Index', 'Middle', 'Ring', 'Little']:
             gen_finger_ctrl(obj, finger, side, 'X')
+        
         gen_limbs_ik(obj, 'Arm', side)
         gen_limbs_ik(obj, 'Leg', side)
+
         fix_arm_twist(obj, side)
-    set_spring_bones(obj)
-       
     
+    set_spring_bones(obj)
