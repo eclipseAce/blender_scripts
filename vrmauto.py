@@ -308,18 +308,18 @@ def gen_limbs_ik(obj:Object, kind:str, side:str):
         pbone:PoseBone = obj.pose.bones[ik_name]
         pbone.custom_shape = get_hand_bone_shape()
 
-        # hand ik bone rotation limit
-        c:LimitRotationConstraint = add_constraint(pbone, 'VRMAUTO_HandRotationLimit', 'LIMIT_ROTATION')
-        c.use_limit_x = c.use_limit_z = True
-        c.min_x = math.radians(-80)
-        c.max_x = math.radians(80)
-        if is_left():
-            c.min_z = math.radians(-10)
-            c.max_z = math.radians(45)
-        else:
-            c.min_z = math.radians(-45)
-            c.max_z = math.radians(10)
-        c.owner_space = 'LOCAL'
+        # hand ik bone rotation limit ()
+        # c:LimitRotationConstraint = add_constraint(pbone, 'VRMAUTO_HandRotationLimit', 'LIMIT_ROTATION')
+        # c.use_limit_x = c.use_limit_z = True
+        # c.min_x = math.radians(-80)
+        # c.max_x = math.radians(80)
+        # if is_left():
+        #     c.min_z = math.radians(-10)
+        #     c.max_z = math.radians(45)
+        # else:
+        #     c.min_z = math.radians(-45)
+        #     c.max_z = math.radians(10)
+        # c.owner_space = 'LOCAL'
     else:
         # change leg ik bone shape
         pbone:PoseBone = obj.pose.bones[ik_name]
@@ -419,9 +419,9 @@ def set_spring_bones(obj:Object):
             continue
         bone.sb_bone_spring = True
         bone.sb_bone_rot = True
-        bone.sb_stiffness = 0.3
+        bone.sb_stiffness = 0.2
         bone.sb_gravity = 0
-        bone.sb_damp = 0.5
+        bone.sb_damp = 0.6
 
 obj = bpy.context.active_object
 if obj != None and obj.type == 'ARMATURE':
