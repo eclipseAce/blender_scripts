@@ -295,7 +295,7 @@ def gen_limbs_ik(obj:Object, kind:str, side:str):
             obj.pose.bones[hand_name], 'VRAMAUTO_FollowArmIK', 'COPY_TRANSFORMS',
             target = obj,
             subtarget = ik_name,
-            target_space = 'LOCAL',
+            target_space = 'LOCAL_OWNER_ORIENT',
             owner_space = 'LOCAL',
         )
 
