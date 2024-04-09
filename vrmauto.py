@@ -401,20 +401,6 @@ def change_root_bone_shape(obj:Object):
     pbone:PoseBone = obj.pose.bones[root_name]
     pbone.custom_shape = get_root_bone_shape()
 
-def set_spring_bones(obj:Object):
-    armature:Armature = get_armature(obj)
-    
-    bone_pattern = re.compile("^((Hair|Bust)\\d+|Skirt(Side|Front|Back)(_end)?_\\d+)_(L|R|\\d+)$")
-
-    for name, bone in obj.pose.bones.items():
-        if bone_pattern.match(name) is None:
-            continue
-        bone.sb_bone_spring = True
-        bone.sb_bone_rot = True
-        bone.sb_stiffness = 0.4
-        bone.sb_gravity = 0
-        bone.sb_damp = 0.5
-
 obj = bpy.context.active_object
 if obj != None and obj.type == 'ARMATURE':
     symmetrize_bone_names(obj)
@@ -431,5 +417,3 @@ if obj != None and obj.type == 'ARMATURE':
         gen_limbs_ik(obj, 'Leg', side)
 
         fix_arm_twist(obj, side)
-    
-    set_spring_bones(obj)
