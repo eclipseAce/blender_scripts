@@ -249,14 +249,14 @@ def gen_limbs_ik(obj:Object, kind:str, side:str):
             ik.tail = ik.head + lower.vector.normalized() * ik_size
 
             # determin arm pole by the angle between upper and lower arms, they must not be in parallel
-            base_v = Vector((1, 0, 0))
+            base_v = Vector((-1 if is_left() else 1, 0, 0))
             if kind == 'Leg':
                 base_v = Vector((0, 0, 1))
             pole_v:Vector = upper.vector.cross(lower.vector)
             if pole_v.length == 0:
                 raise AssertionError(f"bone '{upper_name}' and '{lower_name}' bone are in parallel")
-            pole_v.rotate(Quaternion(base_v, math.radians(90.0)))
-            pole_v.rotate(Vector(base_v).rotation_difference(lower.tail - upper.head))
+            pole_v.rotate(Quaternion(base_v, math.radians(90)))
+            pole_v.rotate(base_v.rotation_difference(lower.tail - upper.head))
             pole_v.normalize()
 
             # pole is 1.1 times length of upper bone away from joint, and the size is hardcoded as 0.12
@@ -283,9 +283,9 @@ def gen_limbs_ik(obj:Object, kind:str, side:str):
             chain_count = 2,
         )
         if kind == 'Arm':
-            c.pole_angle = math.radians(180 if is_left() else 0)
-        else:
             c.pole_angle = math.radians(-90)
+        else:
+            c.pole_angle = math.radians(90)
     set_ik()
     
     if kind == 'Arm':
@@ -295,6 +295,8 @@ def gen_limbs_ik(obj:Object, kind:str, side:str):
             obj.pose.bones[hand_name], 'VRAMAUTO_FollowArmIK', 'COPY_TRANSFORMS',
             target = obj,
             subtarget = ik_name,
+            target_space = 'LOCAL',
+            owner_space = 'LOCAL',
         )
 
         # set original hand bone to layer 1
