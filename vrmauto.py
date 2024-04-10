@@ -154,15 +154,13 @@ def gen_finger_ctrl(obj:Object, finger:str, side:str, bending_axis:str):
             ctrl.head = bones[bone1_name].head
             ctrl.tail = ctrl.head + (bones[bone3_name].tail - bones[bone1_name].head) * 1.5
             ctrl.parent = bones[hand_name]
+            ctrl.roll = bones[bone1_name].roll
         finally:
             bpy.ops.object.mode_set(mode = prevmode)
         
         pbone:PoseBone = obj.pose.bones[ctrl_name]
         pbone.custom_shape = bone_shape
-        if bending_axis in ['-X', 'X']:
-            pbone.custom_shape_rotation_euler = Euler((0, 1, 0))
-        else:
-            pbone.custom_shape_rotation_euler = Euler((0, 0, 0))
+        pbone.custom_shape_rotation_euler = Euler((0, math.radians(90), 0))
     edit_bones()
     
     # add rotation constraints
@@ -400,8 +398,8 @@ if obj != None and obj.type == 'ARMATURE':
 
     change_root_bone_shape(obj)
 
-    gen_finger_ctrl(obj, 'Thumb', 'L', 'X')
-    gen_finger_ctrl(obj, 'Thumb', 'R', '-X')
+    gen_finger_ctrl(obj, 'Thumb', 'L', 'Z')
+    gen_finger_ctrl(obj, 'Thumb', 'R', '-Z')
     for side in ['L', 'R']:
         for finger in ['Index', 'Middle', 'Ring', 'Little']:
             gen_finger_ctrl(obj, finger, side, '-Z')
