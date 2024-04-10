@@ -248,20 +248,10 @@ def gen_limbs_ik(obj:Object, kind:str, side:str):
             ik.head = lower.tail
             ik.tail = ik.head + lower.vector.normalized() * ik_size
 
-            # determin arm pole by the angle between upper and lower arms, they must not be in parallel
-            base_v = Vector((-1 if is_left() else 1, 0, 0))
-            if kind == 'Leg':
-                base_v = Vector((0, 0, 1))
-            pole_v:Vector = upper.vector.cross(lower.vector)
-            if pole_v.length == 0:
-                raise AssertionError(f"bone '{upper_name}' and '{lower_name}' bone are in parallel")
-            pole_v.rotate(Quaternion(base_v, math.radians(90)))
-            pole_v.rotate(base_v.rotation_difference(lower.tail - upper.head))
-            pole_v.normalize()
-
-            # pole is 1.1 times length of upper bone away from joint, and the size is hardcoded as 0.12
-            pole.head = lower.head + pole_v * (upper.vector.length * 1.1) 
-            pole.tail = pole.head + pole_v * 0.12
+            # pole is the length of upper bone away from joint, and the size is hardcoded as 0.12
+            base_v = Vector((0, 1, 0)) if kind == 'Arm' else Vector((0, -1, 0))
+            pole.head = lower.head + (base_v * upper.vector.length)
+            pole.tail = pole.head + base_v * 0.12
             ik.parent = pole.parent = root
         finally:
             bpy.ops.object.mode_set(mode = prevmode)
