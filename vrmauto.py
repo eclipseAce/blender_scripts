@@ -400,8 +400,8 @@ if obj != None and obj.type == 'ARMATURE':
 
     change_root_bone_shape(obj)
 
-    gen_finger_ctrl(obj, 'Thumb', 'L', '-X')
-    gen_finger_ctrl(obj, 'Thumb', 'R', 'X')
+    gen_finger_ctrl(obj, 'Thumb', 'L', 'X')
+    gen_finger_ctrl(obj, 'Thumb', 'R', '-X')
     for side in ['L', 'R']:
         for finger in ['Index', 'Middle', 'Ring', 'Little']:
             gen_finger_ctrl(obj, finger, side, '-Z')
