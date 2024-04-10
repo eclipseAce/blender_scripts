@@ -159,7 +159,7 @@ def gen_finger_ctrl(obj:Object, finger:str, side:str, bending_axis:str):
         
         pbone:PoseBone = obj.pose.bones[ctrl_name]
         pbone.custom_shape = bone_shape
-        if bending_axis in ['-Z', 'Z']:
+        if bending_axis in ['-X', 'X']:
             pbone.custom_shape_rotation_euler = Euler((0, 1, 0))
         else:
             pbone.custom_shape_rotation_euler = Euler((0, 0, 0))
@@ -171,7 +171,7 @@ def gen_finger_ctrl(obj:Object, finger:str, side:str, bending_axis:str):
             obj.pose.bones[bname1], 'VRMAUTO_BendingFollow', 'COPY_ROTATION',
             target = obj,
             subtarget = bname2,
-            target_space = 'LOCAL',
+            target_space = 'LOCAL_OWNER_ORIENT',
             owner_space = 'LOCAL',
         )
     set_rotation_follow(bone3_name, bone2_name)
@@ -194,7 +194,8 @@ def gen_finger_ctrl(obj:Object, finger:str, side:str, bending_axis:str):
     def set_rotation_driver(bname, axis):
         index  = {'X':1, '-X':1, 'Y':2, '-Y':2, 'Z':3, '-Z':3}[axis]
         b = obj.pose.bones[bname]
-        b.driver_remove('rotation_quaternion', index)
+        for i in range(3):
+            b.driver_remove('rotation_quaternion', i + 1)
         drv = b.driver_add('rotation_quaternion', index).driver
         drv.type = 'SCRIPTED'
         drv.expression = '(var - 1) * 2'
@@ -399,11 +400,11 @@ if obj != None and obj.type == 'ARMATURE':
 
     change_root_bone_shape(obj)
 
-    gen_finger_ctrl(obj, 'Thumb', 'L', '-Z')
-    gen_finger_ctrl(obj, 'Thumb', 'R', 'Z')
+    gen_finger_ctrl(obj, 'Thumb', 'L', '-X')
+    gen_finger_ctrl(obj, 'Thumb', 'R', 'X')
     for side in ['L', 'R']:
         for finger in ['Index', 'Middle', 'Ring', 'Little']:
-            gen_finger_ctrl(obj, finger, side, 'X')
+            gen_finger_ctrl(obj, finger, side, '-Z')
         
         gen_limbs_ik(obj, 'Arm', side)
         gen_limbs_ik(obj, 'Leg', side)
